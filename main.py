@@ -1,8 +1,10 @@
 """This is a simple Logistic Regression model for a target of two classes.
-It uses a Gradient descent algorithm to calculate the ideal weights."""
+It uses a Gradient descent algorithm to calculate the ideal weights.
+The class has metric methods to evaluate the fit of the model."""
 
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 
 class Logistic_regression:
@@ -29,9 +31,11 @@ class Logistic_regression:
         """the transformation of the linear value z = w.T.dot(X)  on the sigmoid line"""
         return 1 / (1 + np.exp(-z))
 
+
     def cross_entropy(self, T, y_pred):
         """The cross entropy function in matrix form"""
         return -T.dot(np.log(y_pred)) - (1 - T).dot(np.log(1 - y_pred))
+
 
     def fit(self, X, Y):
         """The function fit takes the dependent variables matrix and the target matrix as inputs.
@@ -101,7 +105,7 @@ class Logistic_regression:
         else:
             print("Model not trained.")
 
-    def confusion_matrix(self, T, Y_prob):
+    def confusion_matrix(self, T, Y_prob, values =False):
         TP = 0
         FP = 0
         TN = 0
@@ -118,8 +122,49 @@ class Logistic_regression:
                     TN += 1
                 else:
                     FP += 1
+        if values:
+            return TP, FP, FN, TN
+        else:
+            return np.array([[TP, FN],[FP, TN]])
 
-        return np.array([[TP, FN],[FP, TN]])
+    def metrics(self, T, Y):
+        """Calculates recall precision and F1 metric for each class and the accuracy of the model."""
+        TP, FP, FN, TN = self.confusion_matrix(T, Y, values = True)
+
+
+        d = {"class_1": {"recall": TP / (TP + FN), "precision": TP/(TP + FP), "F1" : TP/(TP + 0.5*(FP + FN))},
+             "class_2": {"recall": TN / (TN + FP), "precision": TN/(TN + FN), "F1" : TN/(TN + 0.5*(FN + FP))},
+             "accuracy": (TN + TP)/(TN + TP + FN + FP)}
+        return d
+
+    # noinspection PyTypeChecker
+    def ROC(self, X, T):
+        """Creates the ROC diagram for our regression"""
+
+        recall = []
+        specif_minus = []
+        divisions = 100
+
+        for p in np.linspace(0, 1, num=divisions ):
+            y_predict = self.predict(X, p)
+
+            TP, FP, FN, TN = self.confusion_matrix(T, y_predict, values=True)
+
+            recall.append(TP / (TP + FN))
+            specif_minus.append(1 - TN/(TN + FP))
+
+
+        # calc auc score
+        auc = 0
+        for i in range(len(recall) - 1):
+            auc += (recall[i] + recall[i+1])*(specif_minus[i+1] - specif_minus[i])*0.5
+
+        plt.plot(specif_minus, recall, label=f"ROC curve - AUC: {auc}")
+        plt.plot([0,1], [0,1],"--")
+        plt.legend(loc='lower right')
+        plt.ylabel("sensitivity")
+        plt.xlabel("1 - specificity")
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -133,5 +178,4 @@ if __name__ == "__main__":
     t_reg2 = Logistic_regression(max_iter=1000, a=0.001)
     t_reg2.fit(X_train, Y_train)
 
-    pred = t_reg2.predict(X_test)
-    print(t_reg2.confusion_matrix(Y_test, pred))
+    t_reg2.ROC(X_test, Y_test)
