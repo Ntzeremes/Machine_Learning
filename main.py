@@ -1,6 +1,9 @@
-"""This is a simple Logistic Regression model for a target of two classes.
-It uses a Gradient descent algorithm to calculate the ideal weights.
-The class has metric methods to evaluate the fit of the model."""
+"""Logistic_Regression
+
+This is a simple Logistic Regression model for a target of two classes.
+It uses a basic Gradient descent algorithm to calculate the weights.
+The class has metric methods to evaluate the fit of the model.
+"""
 
 import numpy as np
 import pandas as pd
@@ -10,36 +13,98 @@ import matplotlib.pyplot as plt
 class Logistic_regression:
     """The class that creates the logistic regression model.
     max_iter : the number of maximum iterations of the gradient decent algorithm
-    a : the learning rate of gradient decent
-    error_diff: the threshold for the cross entropy difference
-    show: printing some info about the steps of the processes
+
+    Attributes
+    ******************************
+    max_iter : int default = 1000
+        The number of maximum iterations the gradient decent algorithm does.
+    a : float
+        the learning rate of gradient decent.
+    error_diff:  float default = 1e-7
+        The threshold for the cross entropy difference. When the difference of cross entropy between iterations of the
+        gradient descend is smaller than the threshold, the algorithm stops.
+    show: boolean
+        printing some info about the steps of the processes if True
+    regularization : int, values : (1 or 2)
+        If 1 Lasso regularization  will be used
+        If 2 Ridge regularization  will be used
+    l : float
+        The regularization factor
+    trained: bool
+        True if the instance has been trained(fit) on data
+    w : default (None) else mp array
+        When the instance is initiolized the value is None
+        if the instance is trained, w will be  D X 1  array of the weights of the model.
     """
 
-    def __init__(self, max_iter=1000, a=0.01, error_diff=1e-7, show=False):
+    def __init__(self, max_iter=1000, a=0.01, error_diff=1e-7, show=False, regularization=None, l=0.1):
         self.D = None
         self.trained = False
         self.max_iter = max_iter
         self.a = a
-        self.w = None
         self.N = None
         self.error_diff = error_diff
         self.show = show
         self.w = None
+        self.regularization = regularization
+        self.l = l
+
+    @staticmethod
+    def regularization_cost(regularization, l, w):
+        """Calculated the Regularization error and returns it"""
+        if regularization == 2:
+            return l*w
+        elif regularization == 1:
+            return l * np.sign(w)
+        else:
+            return 0
 
     @staticmethod
     def sigmoid(z):
-        """the transformation of the linear value z = w.T.dot(X)  on the sigmoid line"""
+        """the transformation of the linear value  z on the sigmoid line
+
+        Parameters
+        ******************************
+        z : N x 1 dimension array
+            A vector, that is calculated from the linear combination of the weights and feature values
+            z = W.T.dot(X)
+
+        Returns:
+            N x  1 array of the predicted value probabilities
+        """
         return 1 / (1 + np.exp(-z))
 
 
     def cross_entropy(self, T, y_pred):
-        """The cross entropy function in matrix form"""
+        """The cross entropy function in matrix form.
+
+        Parameters
+        ******************************
+        Τ : one dimensional np.array
+            An array with the target values .
+        y_pred : one dimensional np.array
+            An array with the predicted values our model gives.
+
+
+        Returns:
+            The cross entropy score for our model
+        """
         return -T.dot(np.log(y_pred)) - (1 - T).dot(np.log(1 - y_pred))
 
 
     def fit(self, X, Y):
         """The function fit takes the dependent variables matrix and the target matrix as inputs.
-        The input matrices must be np arrays of the correct shape."""
+
+        Parameters
+        ******************************
+         X : N x D dimensions np.array
+            The training feature values.
+        Y : N x 1 dimensions np.array:
+            The training test/target values of our dataset
+
+        Returns: None
+            Saves in the regression instance the weights of the model.
+        """
 
         self.N, self.D = X.shape[0], X.shape[1]
 
@@ -48,11 +113,11 @@ class Logistic_regression:
         X = np.concatenate((ones, X), axis=1)
 
         # initialize weights
-        w = 0.01 * np.random.randn(self.D + 1)
+        self.w = 0.01 * np.random.randn(self.D + 1)
 
         # starting the gradient descent
         iterations = 1
-        y_prob = self.sigmoid(X.dot(w))
+        y_prob = self.sigmoid(X.dot(self.w))
         e = 1
         e_prev = self.cross_entropy(Y, y_prob)
 
@@ -63,14 +128,17 @@ class Logistic_regression:
 
         while iterations < self.max_iter and e > self.error_diff:
 
+            reg_error = self.regularization_cost(self.regularization, self.l, self.w)
+
             # calculating the changes in w
-            w_change = self.a * X.T.dot(Y - y_prob)
-            w += w_change
+            w_change = self.a * (X.T.dot(Y - y_prob) + reg_error)
+            self.w += w_change
 
             # new predictions
-            y_prob = self.sigmoid(X.dot(w))
+            y_prob = self.sigmoid(X.dot(self.w))
             e_new = self.cross_entropy(Y, y_prob)
 
+            # if show is True printing some info every 20 iterations
             if iterations % 20 == 0 and self.show:
                 print(f"Cross entropy is {e_new}.")
                 print(f"Iteration : {iterations}.\n")
@@ -86,15 +154,27 @@ class Logistic_regression:
             print("Gradient decent reached max iterations.")
 
         self.trained = True
-        self.w = w
+
 
     def get_coef(self):
+        """Returns: D X 1 np array
+            the weights of the model"""
         if self.trained:
             return self.w
         else:
             print("Model not trained.")
 
     def y_probab(self, X):
+        """Calculates adn returns the predicted probability Y for each feature vector in X
+
+        Parameters
+        *******************************
+        X : N X D dimensions array
+            The test feature data
+
+        Returns : N x 1 arraey
+            The predicted probability values for our input features X.
+        """
         return self.sigmoid(X.dot(self.w))
 
     def predict(self, X, p=0.5):
@@ -175,7 +255,16 @@ if __name__ == "__main__":
     from sklearn.model_selection import train_test_split
 
     X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, random_state=0, stratify=Y)
-    t_reg2 = Logistic_regression(max_iter=1000, a=0.001)
-    t_reg2.fit(X_train, Y_train)
+    t_reg = Logistic_regression(max_iter=1000, a=0.001)
+    t_reg.fit(X_train, Y_train)
+    y_pred = t_reg.predict(X_test)
+    print(t_reg.metrics(Y_test, y_pred))
+    print(t_reg.get_coef())
 
-    t_reg2.ROC(X_test, Y_test)
+
+    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, random_state=0, stratify=Y)
+    t_reg2 = Logistic_regression(max_iter=1000, a=0.001, regularization=2, l = 1)
+    t_reg2.fit(X_train, Y_train)
+    y_pred = t_reg2.predict(X_test)
+    print(t_reg2.metrics(Y_test, y_pred))
+    print(t_reg2.get_coef())
