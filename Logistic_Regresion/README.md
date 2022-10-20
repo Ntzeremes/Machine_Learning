@@ -1,6 +1,6 @@
 # Logistic_Regression
 
-This is a simple logistic regression model for a target of two classes. It uses a gradient decent algorithm to calculate the weights.
+This is a simple logistic regression model for a target of two classes. It uses a gradient decent algorithm and cross entropy cost ,to calculate the weights.
 Regularization Lasso and Ridge can be used in the model.
 
 The model uses the same methods fit and predict as the sklearn logistic regression.
