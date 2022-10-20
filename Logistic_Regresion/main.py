@@ -245,27 +245,3 @@ class Logistic_regression:
         plt.ylabel("sensitivity")
         plt.xlabel("1 - specificity")
         plt.show()
-
-
-if __name__ == "__main__":
-    df = pd.read_csv("test.csv")
-    Y = df.iloc[:, 1].values
-    X = df.iloc[:, 2:].values
-
-    from sklearn.model_selection import train_test_split
-
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, random_state=0, stratify=Y)
-    t_reg = Logistic_regression(max_iter=1000, a=0.001)
-    t_reg.fit(X_train, Y_train)
-    y_pred = t_reg.predict(X_test)
-    print(t_reg.metrics(Y_test, y_pred))
-    print(t_reg.get_coef())
-
-
-    X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.25, random_state=0, stratify=Y)
-    t_reg2 = Logistic_regression(max_iter=1000, a=0.001, regularization=2, l = 1)
-    t_reg2.fit(X_train, Y_train)
-    y_pred = t_reg2.predict(X_test)
-    print(t_reg2.metrics(Y_test, y_pred))
-    print(t_reg2.get_coef())
-    t_reg2.ROC(X_test, t_reg2.y_probab()
