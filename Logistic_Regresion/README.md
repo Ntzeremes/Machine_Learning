@@ -12,10 +12,6 @@ The model doesnt handle wrong arguments from the user in most cases, it was deve
 However suffiecient documentetion is provided.
 
 
-# Comparison with already existed libraries.
-
-A Jupiter notebook in which our model is used, compared to sklearn model and statmodels is provided.
-
 ## Sources
 
 Udemy course : Deep Learning Prerequisites: Logistic Regression in Python
