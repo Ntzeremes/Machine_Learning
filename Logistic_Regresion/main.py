@@ -12,7 +12,6 @@ import matplotlib.pyplot as plt
 
 class Logistic_regression:
     """The class that creates the logistic regression model.
-    max_iter : the number of maximum iterations of the gradient decent algorithm
 
     Attributes
     ******************************
